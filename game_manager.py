@@ -4,14 +4,13 @@ import sys
 from core.player import Player
 from ui.renderer import Renderer
 from ui.assets_manager import AssetManager
-from ui.tile_animator import TileAnimator
 
 from core.game_logic import FactoryGame
 
 # Game settings
 WIDTH, HEIGHT = 2200, 900
 FPS = 60
-DEBUG_MAX_PLAYERS = 3
+DEBUG_MAX_PLAYERS = 2
 
 class GameManager:
     def __init__(self):
@@ -36,7 +35,6 @@ class GameManager:
 
         self.game_logic = FactoryGame(self.players)
         self.renderer = Renderer(self.screen, self.assets, self.game_logic)
-        self.tile_animator = TileAnimator()
         
 
     def fill_factories(self):

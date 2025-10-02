@@ -44,27 +44,53 @@ class TileRenderer:
         return outlined
     
     def draw_tile(self, tile, pos, rotate=True, shadow=True, outline=True):
-        
-        draw_pos = tile.pos if tile.pos is not None else pos
-        if draw_pos is None:
-            raise ValueError("Tile has no position to draw at")
-        
+        # Initialize animation properties
+        if not hasattr(tile, "screen_pos"):
+            tile.screen_pos = pos
+            tile.target_pos = pos
+            tile.start_pos = pos
+            tile.progress = 1
+            tile.animating = False
+
+        # If renderer suggests new target
+        if pos != tile.target_pos:
+            tile.start_pos = tile.screen_pos
+            tile.target_pos = pos
+            tile.progress = 0
+            tile.animating = True
+
+        # Animate if needed
+        if tile.animating:
+            speed = 0.08
+            tile.progress += speed
+            if tile.progress >= 1:
+                tile.progress = 1
+                tile.animating = False
+
+            # Interpolate
+            x = tile.start_pos[0] + (tile.target_pos[0] - tile.start_pos[0]) * tile.progress
+            y = tile.start_pos[1] + (tile.target_pos[1] - tile.start_pos[1]) * tile.progress
+            tile.screen_pos = (x, y)
+        else:
+            tile.screen_pos = tile.target_pos
+
+        # --- Drawing at animated screen_pos ---
         img = self._get_tile_image(tile)
-        outlined = self._make_tile_with_outline(img, outline_color=(0,0,0))
+        outlined = self._make_tile_with_outline(img, outline_color=(0, 0, 0))
 
         if rotate:
             outlined = pygame.transform.rotate(outlined, tile.rotation)
 
-        rect = outlined.get_rect(center=(pos[0] + self.tile_size // 2,
-                                        pos[1] + self.tile_size // 2))
+        rect = outlined.get_rect(center=(tile.screen_pos[0] + self.tile_size // 2,
+                                        tile.screen_pos[1] + self.tile_size // 2))
 
         # shadow pass
         if shadow:
             shadow_img = outlined.copy()
-            shadow_img.fill((0,0,0,120), special_flags=pygame.BLEND_RGBA_MULT)
-            self.screen.blit(shadow_img, (rect.x+4, rect.y+4))
+            shadow_img.fill((0, 0, 0, 120), special_flags=pygame.BLEND_RGBA_MULT)
+            self.screen.blit(shadow_img, (rect.x + 4, rect.y + 4))
 
-        # final tile
         self.screen.blit(outlined, rect.topleft)
-        
+
         return rect
+
