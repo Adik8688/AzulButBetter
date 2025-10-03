@@ -3,14 +3,14 @@ import random
 from core.tile import Tile
 from core.factory import Factory
 from core.middle import Middle
-from core.game_logic import FactoryGame
+from core.game_logic import AzulGame
 
 class TestFactoryGame(unittest.TestCase):
 
     def setUp(self):
         # 2 dummy players
         self.players = ["Player1", "Player2"]
-        self.game = FactoryGame(self.players)
+        self.game = AzulGame(self.players)
 
     def test_take_tiles_from_plate(self):
         # Fill factories from bag
@@ -30,7 +30,7 @@ class TestFactoryGame(unittest.TestCase):
         initial_tiles = plate.tiles[:]
 
         # Perform the action: player takes tiles from the factory
-        chosen_tiles = self.game.player_take_from_factory(factory_index=plate_index, color=chosen_color)
+        chosen_tiles = self.game.player_select_from_factory(factory_index=plate_index, color=chosen_color)
 
         # All tiles of chosen color taken
         expected_chosen = [t for t in initial_tiles if t.color == chosen_color]
@@ -64,7 +64,7 @@ class TestFactoryGame(unittest.TestCase):
             self.skipTest("Randomly picked empty plate, skip")
 
         chosen_color_factory = random.choice([t.color for t in plate.tiles])
-        chosen_from_factory = self.game.player_take_from_factory(factory_index=plate_index,
+        chosen_from_factory = self.game.player_select_from_factory(factory_index=plate_index,
                                                                 color=chosen_color_factory)
 
         # Step 2: take tiles from middle
@@ -82,7 +82,7 @@ class TestFactoryGame(unittest.TestCase):
                         "Did not take correct tiles from middle")
 
         # Tile(-1) should now be marked taken
-        self.assertTrue(self.game.middle.first_player_taken, "Tile(-1) was not marked as taken")
+        self.assertTrue(self.game.middle.tile_first_taken, "Tile(-1) was not marked as taken")
 
         # Middle should no longer have any tiles of the chosen color
         remaining_colors = [t.color for t in self.game.middle.tiles]
@@ -99,7 +99,7 @@ class TestFactoryGame(unittest.TestCase):
             if not plate.tiles:
                 continue
             chosen_color = random.choice([t.color for t in plate.tiles])
-            chosen_tiles = self.game.player_take_from_factory(factory_index=i, color=chosen_color)
+            chosen_tiles = self.game.player_select_from_factory(factory_index=i, color=chosen_color)
             # Plate should be empty after taking
             self.assertEqual(plate.tiles, [], f"Factory {i} not empty after taking tiles")
 
@@ -130,7 +130,7 @@ class TestFactoryGame(unittest.TestCase):
 
         # --- Step 4: Final middle state ---
         # Tile(-1) should be marked as taken
-        self.assertTrue(self.game.middle.first_player_taken, "Tile(-1) not marked as taken")
+        self.assertTrue(self.game.middle.tile_first_taken, "Tile(-1) not marked as taken")
         # Middle should only contain colors that were not drawn in the 3 draws
         remaining_colors = [t.color for t in self.game.middle.tiles]
         for t in remaining_colors:

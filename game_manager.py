@@ -5,12 +5,12 @@ from core.player import Player
 from ui.renderer import Renderer
 from ui.assets_manager import AssetManager
 
-from core.game_logic import FactoryGame
+from core.game_logic import AzulGame
 
 # Game settings
 WIDTH, HEIGHT = 2200, 900
 FPS = 60
-DEBUG_MAX_PLAYERS = 2
+DEBUG_MAX_PLAYERS = 3
 
 class GameManager:
     def __init__(self):
@@ -26,14 +26,14 @@ class GameManager:
 
         # Players
         self.players = [
-            Player("Oddajmake", (0, 128, 255)),
-            Player("Ni88achu", (255, 0, 0)),
-            Player("Dolphie-hottie", (0, 255, 0)),
-            Player("Twój Stary", (255, 0, 255)),
+            Player("Oddajmake"),
+            Player("Ni88achu"),
+            Player("Dolphie-hottie"),
+            Player("Twój Stary"),
         ]
         self.players = self.players[:DEBUG_MAX_PLAYERS]
 
-        self.game_logic = FactoryGame(self.players)
+        self.game_logic = AzulGame(self.players)
         self.renderer = Renderer(self.screen, self.assets, self.game_logic)
         
 
@@ -87,12 +87,12 @@ class GameManager:
                 for rect, (origin, factory_idx, color) in self.renderer.factory_renderer.tile_click_map:
                     if rect.collidepoint(pos):
                         if origin == "factory":
-                            chosen = self.game_logic.player_take_from_factory(factory_idx, color)
+                            chosen = self.game_logic.player_select_from_factory(factory_idx, color)
                             for t in chosen:
                                 t.origin = "factory"
                                 t.factory_idx = factory_idx
                         elif origin == "middle":
-                            chosen = self.game_logic.player_take_from_middle(color)
+                            chosen = self.game_logic.player_select_from_middle(color)
                             for t in chosen:
                                 t.origin = "middle"
                         continue
@@ -105,10 +105,7 @@ class GameManager:
         pass
 
     def draw(self):
-        self.renderer.draw_background()
-        self.renderer.draw_boards()
-        self.renderer.draw_factories()
-        self.renderer.draw_selected_tiles()
+        self.renderer.draw()
         
         pygame.display.flip()
 

@@ -20,27 +20,22 @@ COLOR_OFFSETS = [
 ]
 
 class FactoryRenderer:
-    def __init__(self, screen, asset_manager: AssetManager, num_factories, factory_scale=1, tile_size=50):
+    def __init__(self, screen, asset_manager: AssetManager, num_factories, factory_scale=1):
         self.screen = screen
         self.assets = asset_manager
         self.num_factories = num_factories
 
-        screen_width, screen_height = self.screen.get_size()
-        self.center = (screen_width * CENTER_X_RATIO, screen_height * CENTER_Y_RATIO)
-        self.radius = (screen_height + (num_factories - 5) * 100) * RADIUS_RATIO
+        # Values for plates arrangement
+        width, height = self.screen.get_size()
+        self.center = (width * CENTER_X_RATIO, height * CENTER_Y_RATIO)
+        self.radius = (height + (num_factories - 5) * 100) * RADIUS_RATIO
         self.scale = factory_scale
 
         # Load factory plate image
-        self.original_factory_img = self.assets.load_image("factory.png")
-        w, h = self.original_factory_img.get_size()
-        self.factory_w = int(w * self.scale)
-        self.factory_h = int(h * self.scale)
-        self.factory_img = pygame.transform.smoothscale(
-            self.original_factory_img, (self.factory_w, self.factory_h)
-        )
+        self.factory_img = self.assets.load_image("factory.png", factory_scale)
 
         # Tile renderer
-        self.tile_renderer = TileRenderer(screen, asset_manager, tile_size=tile_size)
+        self.tile_renderer = TileRenderer(screen, asset_manager)
         self.tile_click_map = []
         
         self._group_angles = self._get_group_angles()
@@ -54,55 +49,44 @@ class FactoryRenderer:
             randomizer = (i + offset) % 5 + 1
             group_angles[i] = randomizer * (2 * math.pi / 5)
 
-        return group_angles
-            
+        return group_angles     
 
     def draw_factories(self, factories):
         factories_info = []
         cx, cy = self.center
+        fw, fh = self.factory_img.get_size()
         self.tile_click_map = []  # reset click map each frame
 
+        # precompute slot offsets once
+        slot_r = min(fw, fh) // 6
+        slot_offsets = [
+            (-slot_r, -slot_r), ( slot_r, -slot_r),
+            (-slot_r,  slot_r), ( slot_r,  slot_r)
+        ]
+
         for i, factory in enumerate(factories):
-            # arranging plates 
-            
+            # position factory on circle
             angle = i * (2 * math.pi / self.num_factories) - math.pi / 2
-            fx = cx + int(math.cos(angle) * self.radius) - self.factory_w // 2
-            fy = cy + int(math.sin(angle) * self.radius) - self.factory_h // 2
+            fx = cx + int(math.cos(angle) * self.radius) - fw // 2
+            fy = cy + int(math.sin(angle) * self.radius) - fh // 2
 
-            rect = pygame.Rect(fx, fy, self.factory_w, self.factory_h)
-            self.screen.blit(self.factory_img, (fx, fy))
-
-            # slots for tiles
-            slot_radius = min(self.factory_w, self.factory_h) // 6
-            slot_offsets = [
-                (-slot_radius, -slot_radius),
-                ( slot_radius, -slot_radius),
-                (-slot_radius,  slot_radius),
-                ( slot_radius,  slot_radius),
-            ]
+            rect = pygame.Rect(fx, fy, fw, fh)
+            self.screen.blit(self.factory_img, rect.topleft)
 
             slots = []
-            
-            # placing tiles in slots
-            for j, tile in enumerate(factory.tiles):
-                if j >= len(slot_offsets):
-                    break
-                ox, oy = slot_offsets[j]
-                sx = fx + self.factory_w // 2 + ox
-                sy = fy + self.factory_h // 2 + oy
-
+            # draw tiles into slots (zip prevents overflow)
+            for (ox, oy), tile in zip(slot_offsets, factory.tiles):
+                sx, sy = fx + fw // 2 + ox, fy + fh // 2 + oy
                 pos = (sx - self.tile_renderer.tile_size // 2,
                     sy - self.tile_renderer.tile_size // 2)
-                rect_tile = self.tile_renderer.draw_tile(tile, pos)
 
+                rect_tile = self.tile_renderer.draw_tile(tile, pos)
                 slots.append((sx, sy))
                 self.tile_click_map.append((rect_tile, ("factory", i, tile.color)))
 
             factories_info.append((rect, slots))
-            
 
         return factories_info
-
 
     def draw_middle(self, middle, radius=120):
         mx, my = self.center

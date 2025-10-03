@@ -11,7 +11,7 @@ TILES_MAP = {
 }
 
 class TileRenderer:
-    def __init__(self, screen, asset_manager: AssetManager, tile_size=120):
+    def __init__(self, screen, asset_manager: AssetManager, tile_size=50):
         self.screen = screen
         self.assets = asset_manager
         self.tile_size = tile_size

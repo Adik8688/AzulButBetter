@@ -2,24 +2,18 @@ import pygame
 from ui.utils import render_text_with_outline
 
 class ButtonRenderer:
-    def __init__(self, screen):
+    def __init__(self, screen, size=(120, 50), margin = 20):
         self.screen = screen
+        self.size = size
+        self.margin = margin
         self.buttons = {}  # store button_id -> pygame.Rect
 
-    def draw_undo_button(self, pos=None, size=(120, 50)):
-        """
-        Draws a red left-pointing arrow with 'UNDO' label.
-        Stores the clickable rect in self.buttons['undo'].
-        pos: (x, y) top-left of button. Defaults to bottom-left corner.
-        size: width, height of clickable area.
-        """
+    def draw_undo_button(self, pos=None):
         screen_width, screen_height = self.screen.get_size()
-        width, height = size
-        margin = 20
-        if pos is None:
-            x = margin
-            y = screen_height - height - margin
-        else:
+        width, height = self.size
+        
+        x, y = self.margin, screen_height - height - self.margin
+        if pos is not None:
             x, y = pos
 
         # Draw red arrow (triangle) pointing left
@@ -28,6 +22,7 @@ class ButtonRenderer:
             (x + 40, y + 10),             # top back
             (x + 40, y + height - 10)     # bottom back
         ]
+        
         pygame.draw.polygon(self.screen, (255, 0, 0), arrow_points)
 
         # Draw label using outline text
