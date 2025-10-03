@@ -33,6 +33,7 @@ class Renderer:
         # undo
         self.button_renderer = ButtonRenderer(screen)
         
+    
     def draw_background(self):
         bg_width, bg_heigth = self.background.get_size()
         
@@ -61,11 +62,14 @@ class Renderer:
 
     def draw_boards(self):
         board_rects = []
-        for i, player in enumerate(self.game_logic.players):
-            rect = self.board_renderer.draw_board(player, self.game_logic.selected_tiles)
+        for player in self.game_logic.players:
+            
+            if self.game_logic.is_selection():
+                rect = self.board_renderer.draw_board(player, self.game_logic.current_player, self.game_logic.possible_moves())
+            else:
+                rect = self.board_renderer.draw_board(player, self.game_logic.current_player, None)
+            
             board_rects.append(rect)
-            # if i == self.game_logic.current_player and self.game_logic.selected_tiles:
-            #     self.board_renderer.highlight_valid_rows(player.board, self.game_logic.selected_tiles)
 
         return board_rects
     

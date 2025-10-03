@@ -38,8 +38,7 @@ class FactoryRenderer:
         self.tile_renderer = TileRenderer(screen, asset_manager)
         self.tile_click_map = []
         
-        self._group_angles = self._get_group_angles()
-        
+        self._group_angles = self._get_group_angles()     
         
     def _get_group_angles(self):
         group_angles = {}
@@ -88,9 +87,10 @@ class FactoryRenderer:
 
         return factories_info
 
-    def draw_middle(self, middle, radius=120):
+    def draw_middle(self, middle):
         mx, my = self.center
-
+        radius = self.radius / 2.4
+        
         # Split tiles
         first_tile = None
         other_tiles = []

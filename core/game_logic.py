@@ -22,6 +22,12 @@ class AzulGame:
         self.selected_tiles = []
         self.last_selection_info = None
         
+    def is_selection(self):
+        return bool(self.selected_tiles)
+    
+    def get_selected_tiles(self):
+        return sorted(self.selected_tiles)        
+
     def next_player(self):
         self.current_player = (self.current_player + 1) % len(self.players)     
     
@@ -63,7 +69,11 @@ class AzulGame:
         
         print(f"Color {color} taken from factory {factory_index}")
         print(f"Selected tiles: {self.selected_tiles}")
-        self.possible_moves()
+        
+        moves = self.possible_moves()
+        for m in moves:
+            print(m)
+            
         return chosen
     
     def player_select_from_middle(self, color):
@@ -82,7 +92,10 @@ class AzulGame:
             
         print(f"Selected tiles: {self.selected_tiles}")
         
-        self.possible_moves()
+        moves = self.possible_moves()
+        for m in moves:
+            print(m)
+            
         return chosen
     
     def undo_selection(self):
@@ -164,8 +177,6 @@ class AzulGame:
             "to_floor": count_normal + count_marker
         })
 
-        for m in moves:
-            print(m)
         return moves
 
 

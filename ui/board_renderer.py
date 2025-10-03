@@ -28,7 +28,7 @@ class PlayerBoardRenderer:
         self.screen.blit(text, (name_x, name_y))
     
     
-    def draw_board(self, player: Player, selected_tiles):
+    def draw_board(self, player: Player, current_player, possible_moves):
         """Draw board in 2-column layout anchored to right edge."""
         board_w, board_h = self.board_img.get_size()
         screen_width, _ = self.screen.get_size()
@@ -52,66 +52,64 @@ class PlayerBoardRenderer:
         # Player name (with shadow)
         self.draw_player_name(player.name, player.color, x, y)
 
+        if possible_moves and player.number == current_player:
+            self._highlight_valid_rows(possible_moves, x, y)
+            
+
         return pygame.Rect(x, y, board_w, board_h)
     
-    def highlight_valid_rows(self, board, selected_tiles, x, start_y, end_y, tile_size=40, spacing=5, floor_y=None, floor_width=None):
+    def _highlight_valid_rows(self, possible_moves: list, board_x, board_y):
         """
-        Draw red dotted outlines for rows where at least 1 tile can be placed.
-        - start_y / end_y: vertical bounds for the 5 pattern rows
-        - tile_size: height of tiles (squared)
-        - spacing: space between rows
-        - floor_y: y position for floor line
-        - floor_width: width of floor line
+        Draw red dotted outlines around valid rows (0-4) and the floor row (-1).
+        
+        player: Player object (for accessing board if needed)
+        possible_moves: list of dicts, each with "row", "to_row", "to_floor"
+        board_x, board_y: top-left coordinates of the board image
+        tile_size: height of one tile (square)
+        spacing: spacing between tiles in a row
         """
-        if not selected_tiles:
+        SIZE = 51
+        SPACING = 8
+        
+        # filter to only moves that can actually place at least one tile in row
+        valid_rows = [m["row"] for m in possible_moves if m["to_row"] > 0 or (m["row"] == -1 and m["to_floor"] > 0)]
+        if not valid_rows:
             return
 
-        # Separate normal tiles from markers
-        normal_tiles = [t for t in selected_tiles if t != -1]
-        if not normal_tiles:
-            return  # only marker → floor
+        x_right = board_x + 295
+        
+        # Draw pattern rows (0-4)
+        for row_idx in range(5):
+            if row_idx not in valid_rows:
+                continue
 
-        color = normal_tiles[0]
-
-        # Determine valid rows
-        moves = []
-        for row_idx in range(board.SIZE):
-            if board.can_place(row_idx, color):
-                moves.append(row_idx)
-        if not moves:
-            return
-
-        # Calculate vertical positions
-        total_height = end_y - start_y
-        row_height = tile_size  # row height = tile height
-        # total required height = 5*tile_size + 4*spacing
-        top_y = start_y
-
-        for row_idx in moves:
-            # Row width grows from 1 tile → 5 tiles
-            row_width = tile_size * (row_idx + 1)
-            # Right-aligned: board right edge is x + board_w
-            x_right = x + board.board_width if hasattr(board, "board_width") else x + 200  # fallback width
+            num_tiles = row_idx + 1
+            row_width = SIZE * num_tiles + SPACING * (num_tiles - 1)
+            row_height = SIZE
             rx = x_right - row_width
-            ry = top_y + row_idx * (row_height + spacing)
+            ry = board_y + 10 + row_idx * (row_height + SPACING)
+
             rect = pygame.Rect(rx, ry, row_width, row_height)
-
             self.draw_dotted_rect(rect, color=(255, 0, 0), dot_size=4, gap=6, width=2)
 
-        # Optionally draw floor line
-        if floor_y is not None and floor_width is not None:
-            rect = pygame.Rect(x + board.board_width - floor_width, floor_y, floor_width, tile_size)
-            self.draw_dotted_rect(rect, color=(255, 0, 0), dot_size=4, gap=6, width=2)
+        
+        num_tiles = 7
+        row_width = SIZE * num_tiles + SPACING * (num_tiles - 1) + 40
+        row_height = SIZE * 1.2
+        rx = x_right - row_width + 150
+        # Position floor row just below the 5th pattern row
+        ry = board_y + 5 * (row_height + SPACING) - 2
 
-
+        rect = pygame.Rect(rx, ry, row_width, row_height)
+        self.draw_dotted_rect(rect, color=(255, 0, 0), dot_size=4, gap=6, width=2)
 
     def draw_dotted_rect(self, rect, color=(255, 0, 0), dot_size=4, gap=4, width=2):
         """Draw a dotted rectangle around a given rect."""
-        # horizontal lines
+        # Top & bottom
         for x in range(rect.left, rect.right, dot_size + gap):
             pygame.draw.line(self.screen, color, (x, rect.top), (min(x + dot_size, rect.right), rect.top), width)
             pygame.draw.line(self.screen, color, (x, rect.bottom), (min(x + dot_size, rect.right), rect.bottom), width)
-        # vertical lines
+        # Left & right
         for y in range(rect.top, rect.bottom, dot_size + gap):
             pygame.draw.line(self.screen, color, (rect.left, y), (rect.left, min(y + dot_size, rect.bottom)), width)
             pygame.draw.line(self.screen, color, (rect.right, y), (rect.right, min(y + dot_size, rect.bottom)), width)
